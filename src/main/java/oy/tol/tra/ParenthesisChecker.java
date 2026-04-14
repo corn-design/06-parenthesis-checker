@@ -21,6 +21,7 @@ package oy.tol.tra;
 public class ParenthesisChecker {
 
    private ParenthesisChecker() {
+
    }
 
    /**
@@ -51,34 +52,56 @@ public class ParenthesisChecker {
        if (stack == null) {
            throw new IllegalArgumentException("Stack cannot be null");
        }
+       if (fromString == null) {
+           return 0; 
+       }
 
        int parenthesesCount = 0;
 
-       for (char ch : fromString.toCharArray()) {
+       for (int i = 0; i < fromString.length(); i++) {
+           char ch = fromString.charAt(i);
            switch (ch) {
                case '(':
                case '[':
                case '{':
                    try {
                        stack.push(ch);
-                   } catch (Exception e) {
+                   } catch (StackAllocationException e) {
                        throw new ParenthesesException("Stack allocation or reallocation failed", ParenthesesException.STACK_FAILURE);
                    }
                    parenthesesCount++;
                    break;
+               
                case ')':
                case ']':
                case '}':
+                Character last;
                    try {
-                       Character last = stack.pop();
-                       if (last == null) {
-                           throw new ParenthesesException("Too many closing parentheses", ParenthesesException.TOO_MANY_CLOSING_PARENTHESES);
-                       }
-                       if (!isMatchingPair(last, ch)) {
-                           throw new ParenthesesException("Mismatched parentheses", ParenthesesException.PARENTHESES_IN_WRONG_ORDER);
-                       }
-                   } catch (Exception e) {
-                       throw new ParenthesesException("Stack operation failed", ParenthesesException.STACK_FAILURE);
+                       last = stack.pop();
+                    } catch (StackIsEmptyException e) {
+                       throw new ParenthesesException(
+                        "Too many closing parentheses at position " + i, 
+                        ParenthesesException.TOO_MANY_CLOSING_PARENTHESES
+                    );
+                    } catch (StackAllocationException e) {
+                    throw new ParenthesesException(
+                        "Failed to pop parenthesis from stack: " + e.getMessage(),
+                        ParenthesesException.STACK_FAILURE
+                    );
+                }
+               
+                   if (last == null) {
+                       throw new ParenthesesException(
+                           "Too many closing parentheses at position " + i, 
+                           ParenthesesException.TOO_MANY_CLOSING_PARENTHESES
+                       );
+                   }
+
+                   if (!isMatchingPair(last, ch)) {
+                       throw new ParenthesesException(
+                           "Mismatched parentheses: " + last + " and " + ch + " at position " + i, 
+                           ParenthesesException.PARENTHESES_IN_WRONG_ORDER
+                       );
                    }
                    parenthesesCount++;
                    break;
